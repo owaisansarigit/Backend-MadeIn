@@ -1,8 +1,7 @@
-const ItemCat = require("../models/itemCategory");
+const ItemCat = require("../Models/itemCategory");
 const response = require("../Utils/resHandler");
 const asynchandler = require("express-async-handler");
 
-// Get all categories
 const getCats = asynchandler(async (req, res) => {
   try {
     const data = await ItemCat.find();
@@ -12,7 +11,6 @@ const getCats = asynchandler(async (req, res) => {
   }
 });
 
-// Create a new category
 const createCat = asynchandler(async (req, res) => {
   try {
     const { catName } = req.body;
@@ -24,7 +22,6 @@ const createCat = asynchandler(async (req, res) => {
   }
 });
 
-// Update a category
 const updateCat = asynchandler(async (req, res) => {
   try {
     const { id } = req.params;
@@ -40,7 +37,6 @@ const updateCat = asynchandler(async (req, res) => {
   }
 });
 
-// Add a subcategory to a category
 const addSubCat = asynchandler(async (req, res) => {
   try {
     const { id } = req.params;
