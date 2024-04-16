@@ -1,5 +1,10 @@
 const mongoose = require("mongoose");
 const itemSchema = new mongoose.Schema({
+  companyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "Company",
+  },
   itemCode: {
     type: String,
     required: true,

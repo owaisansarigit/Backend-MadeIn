@@ -13,17 +13,18 @@ const {
 } = require("../Controllers/itemsCotroller");
 const router = express.Router();
 const multer = require("multer");
+const { verifyToken } = require("../Utils/jwt");
 const upload = multer({ dest: "uploads/" });
 
-router.get("/", getItems);
-router.get("/:id", getItem);
-router.post("/", upload.single("image"), createItem);
-router.put("/:id", updateItem);
-router.put("/:id/pricing", updatePricing);
-router.put("/:id/inventory", updateInventory);
-router.put("/:id/vender", updateVender);
-router.put("/:id/dimension", updateDimension);
-router.put("/:id/image", upload.single("image"), updateImage);
-router.delete("/:id", deleteItem);
+router.get("/", verifyToken, getItems);
+router.get("/:id", verifyToken, getItem);
+router.post("/", verifyToken, upload.single("image"), createItem);
+router.put("/:id", verifyToken, updateItem);
+router.put("/:id/pricing", verifyToken, updatePricing);
+router.put("/:id/inventory", verifyToken, updateInventory);
+router.put("/:id/vender", verifyToken, updateVender);
+router.put("/:id/dimension", verifyToken, updateDimension);
+router.put("/:id/image", verifyToken, upload.single("image"), updateImage);
+router.delete("/:id", verifyToken, deleteItem);
 
 module.exports = router;

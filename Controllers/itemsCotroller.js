@@ -20,7 +20,7 @@ const getItem = asynchandler(async (req, res) => {
 });
 const getItems = asynchandler(async (req, res) => {
   try {
-    let data = await Items.find();
+    let data = await Items.find({ companyId: req.user.companyId }).populate("companyId");
     response.successResponse(res, data, "Data Fetched Successfully");
   } catch (error) {
     response.internalServerError(res, "Internal server error");
@@ -42,6 +42,7 @@ const createItem = asynchandler(async (req, res) => {
       img = imageResult.secure_url;
     }
     const dataToSave = {
+      companyId: req.user.companyId,
       itemCode: req.body.itemCode,
       itemName: req.body.itemName,
       category: req.body.category,
