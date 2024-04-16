@@ -3,7 +3,6 @@ const response = require("../Utils/resHandler");
 const asynchandler = require("express-async-handler");
 const ValidateItem = require("../Middlewares/itemValidate");
 const cloudinary = require("../Utils/cloudinary");
-
 const getItem = asynchandler(async (req, res) => {
   try {
     let data = await Items.findById(req.params.id);
@@ -26,7 +25,6 @@ const getItems = asynchandler(async (req, res) => {
     response.internalServerError(res, "Internal server error");
   }
 });
-
 const createItem = asynchandler(async (req, res) => {
   try {
     var img = "URL";

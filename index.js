@@ -15,6 +15,7 @@ app.use("/api/customer", require("./Routes/customerRoutes"));
 app.use("/api/bom", require("./Routes/BOMRoutes"));
 app.use("/api/cip", require("./Routes/CIPRoutes"));
 app.use("/api/itemscat", require("./Routes/itemCatRoutes"));
+app.use("/api/company", require("./Routes/companyRoutes"));
 
 app.get("/", (req, res) => {
   res.status(200).json({ message: "MadeIn server is running" });
