@@ -10,6 +10,8 @@ const {
   updateVender,
   updateDimension,
   updateImage,
+  getHSN,
+  createHSN,
 } = require("../Controllers/itemsCotroller");
 const router = express.Router();
 const multer = require("multer");
@@ -26,5 +28,8 @@ router.put("/:id/vender", verifyToken, updateVender);
 router.put("/:id/dimension", verifyToken, updateDimension);
 router.put("/:id/image", verifyToken, upload.single("image"), updateImage);
 router.delete("/:id", verifyToken, deleteItem);
+// HSN Routes
+router.get("/hsn/getall", verifyToken, getHSN);
+router.post("/hsn/create", verifyToken, createHSN);
 
 module.exports = router;
