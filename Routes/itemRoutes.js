@@ -12,6 +12,9 @@ const {
   updateImage,
   getHSN,
   createHSN,
+  addItemTracking,
+  getItemTransaction,
+  getAllItemTransactions,
 } = require("../Controllers/itemsCotroller");
 const router = express.Router();
 const multer = require("multer");
@@ -31,5 +34,8 @@ router.delete("/:id", verifyToken, deleteItem);
 // HSN Routes
 router.get("/hsn/getall", verifyToken, getHSN);
 router.post("/hsn/create", verifyToken, createHSN);
-
+// Item Tracking
+router.put("/:id/addtracking", verifyToken, addItemTracking);
+router.get("/getItemTransaction/:id", verifyToken, getItemTransaction);
+router.get("/item/getallitemtransactions", verifyToken, getAllItemTransactions);
 module.exports = router;

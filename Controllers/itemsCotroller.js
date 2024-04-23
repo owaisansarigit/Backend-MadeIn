@@ -4,6 +4,7 @@ const response = require("../Utils/resHandler");
 const asynchandler = require("express-async-handler");
 const ValidateItem = require("../Middlewares/itemValidate");
 const cloudinary = require("../Utils/cloudinary");
+const itemTransaction = require("../Models/itemTransactionModel");
 
 const getItem = asynchandler(async (req, res) => {
   try {
@@ -274,23 +275,27 @@ const getHSN = asynchandler(async (req, res) => {
   }
 });
 const createHSN = asynchandler(async (req, res) => {
-  let { hsnCode, tax, description } = req.body;
-  if (!hsnCode || !tax || !description) {
+  let { hsnCode, tax, igst, cgst, sgst, description } = req.body;
+  if (!hsnCode || !tax || !description || !igst || !sgst || !cgst) {
     return response.validationError(
       res,
       "Cannot Add HSN without Proper details"
     );
   }
   try {
-    // let existingHSN = await HSN.find({
-    //   $and: [{ HSNCode: hsnCode }, { companyId: req.user.companyID }],
-    // });
-    // if (existingHSN) {
-    //   return response.validationError(res, "HSN Code Already Exist !");
-    // }
+    let existingHSN = await HSN.findOne({
+      HSNCode: hsnCode,
+      companyId: req.user.companyId,
+    });
+    if (existingHSN) {
+      return response.validationError(res, "HSN Code Already Exist !");
+    }
     let dataToSave = {
       HSNCode: hsnCode,
       tax,
+      igst,
+      sgst,
+      cgst,
       description,
       companyId: req.user.companyId,
     };
@@ -303,6 +308,71 @@ const createHSN = asynchandler(async (req, res) => {
     }
   } catch (e) {
     response.errorResponse(res, "Internal Server Error");
+  }
+});
+const addItemTracking = asynchandler(async (req, res) => {
+  let {
+    transactionOwnedBy,
+    docNo,
+    docDate,
+    docRefNo,
+    transactionType,
+    typeofActivity,
+    itemCode,
+    quantity,
+    UOM,
+    location,
+    itemTracking,
+  } = req.body;
+  if (
+    !transactionOwnedBy ||
+    !docNo ||
+    !docDate ||
+    !docRefNo ||
+    !transactionType ||
+    !typeofActivity ||
+    !itemCode ||
+    !quantity ||
+    !UOM ||
+    !location ||
+    !itemTracking
+  ) {
+    response.validationError(res, "Please Send Required Data");
+  }
+  try {
+    let dataToSave = {
+      ...req.body,
+      companyId: req.user.companyId,
+      itemId: req.params.id,
+    };
+    const newItemTransaction = await itemTransaction.create(dataToSave);
+    if (newItemTransaction) {
+      return response.successResponse(res, "Transaction Added");
+    }
+  } catch (e) {
+    response.internalServerError(res, "Internal Server Error");
+  }
+});
+const getItemTransaction = asynchandler(async (req, res) => {
+  try {
+    let data = await itemTransaction
+      .find({ itemId: req.params.id })
+      .populate("companyId")
+      .populate("itemId");
+    response.successResponse(res, data, "Data Success fully Fetched");
+  } catch (e) {
+    response.internalServerError(res, "Internal Server Error");
+  }
+});
+const getAllItemTransactions = asynchandler(async (req, res) => {
+  try {
+    let data = await itemTransaction
+      .find({ companyId: req.user.companyId })
+      .populate("companyId")
+      .populate("itemId");
+    response.successResponse(res, data, "Data Successfully Fetched");
+  } catch (e) {
+    response.internalServerError(res, "Internal Server Error");
   }
 });
 module.exports = {
@@ -318,4 +388,7 @@ module.exports = {
   deleteItem,
   getHSN,
   createHSN,
+  addItemTracking,
+  getItemTransaction,
+  getAllItemTransactions,
 };

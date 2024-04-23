@@ -7,6 +7,9 @@ const HSNSchema = new mongoose.Schema({
   },
   HSNCode: { type: String, required: true },
   tax: { type: Number, required: true },
+  igst: { type: Number, required: true },
+  cgst: { type: Number, required: true },
+  sgst: { type: Number, required: true },
   description: { type: String },
 });
 const HSN = mongoose.model("HSN", HSNSchema);
