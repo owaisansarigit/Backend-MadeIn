@@ -54,6 +54,15 @@ const itemTransactionSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  trackingDetails: [
+    {
+      qty: { type: Number, required: true },
+      trackNo: { type: String, required: true },
+    },
+  ],
 });
-const itemTransaction = mongoose.model("itemTransaction", itemTransactionSchema);
+const itemTransaction = mongoose.model(
+  "itemTransaction",
+  itemTransactionSchema
+);
 module.exports = itemTransaction;

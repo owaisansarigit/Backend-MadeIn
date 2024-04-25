@@ -323,6 +323,7 @@ const addItemTracking = asynchandler(async (req, res) => {
     UOM,
     location,
     itemTracking,
+    trackingDetails,
   } = req.body;
   if (
     !transactionOwnedBy ||
@@ -335,11 +336,26 @@ const addItemTracking = asynchandler(async (req, res) => {
     !quantity ||
     !UOM ||
     !location ||
-    !itemTracking
+    !itemTracking ||
+    !trackingDetails
   ) {
     response.validationError(res, "Please Send Required Data");
   }
   try {
+    // Check For Track No is not duplicate
+    let existingTrackNos = new Set(
+      (
+        await itemTransaction
+          .find({ companyId: req.user.companyId })
+          .distinct("trackingDetails.trackNo")
+      ).flat()
+    );
+    let newTrackingDetails = req.body.trackingDetails || [];
+    for (let detail of newTrackingDetails) {
+      if (existingTrackNos.has(detail.trackNo)) {
+        return response.validationError(res, "Duplicate trackNo found");
+      }
+    }
     let dataToSave = {
       ...req.body,
       companyId: req.user.companyId,
@@ -375,6 +391,29 @@ const getAllItemTransactions = asynchandler(async (req, res) => {
     response.internalServerError(res, "Internal Server Error");
   }
 });
+
+let checkTrackNo = asynchandler(async (req, res) => {
+  try {
+    // Check For Track No is not duplicate
+    let existingTrackNos = new Set(
+      (
+        await itemTransaction
+          .find({ companyId: req.user.companyId })
+          .distinct("trackingDetails.trackNo")
+      ).flat()
+    );
+    let newTrackingDetails = req.body || [];
+    for (let detail of newTrackingDetails) {
+      if (existingTrackNos.has(detail.trackNo)) {
+        return response.validationError(res, `Duplicate trackNo ${detail.trackNo}`);
+      } else {
+        response.successResponse(res, "Ok");
+      }
+    }
+  } catch (error) {
+    response.internalServerError(res, "Internal Server Error");
+  }
+});
 module.exports = {
   getItems,
   getItem,
@@ -391,4 +430,5 @@ module.exports = {
   addItemTracking,
   getItemTransaction,
   getAllItemTransactions,
+  checkTrackNo,
 };
