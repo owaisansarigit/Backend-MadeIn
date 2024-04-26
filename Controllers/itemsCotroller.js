@@ -5,6 +5,7 @@ const asynchandler = require("express-async-handler");
 const ValidateItem = require("../Middlewares/itemValidate");
 const cloudinary = require("../Utils/cloudinary");
 const itemTransaction = require("../Models/itemTransactionModel");
+const Warehouse = require("../Models/warehouseModel");
 
 const getItem = asynchandler(async (req, res) => {
   try {
@@ -311,38 +312,39 @@ const createHSN = asynchandler(async (req, res) => {
   }
 });
 const addItemTracking = asynchandler(async (req, res) => {
-  let {
-    transactionOwnedBy,
-    docNo,
-    docDate,
-    docRefNo,
-    transactionType,
-    typeofActivity,
-    itemCode,
-    quantity,
-    UOM,
-    location,
-    itemTracking,
-    trackingDetails,
-  } = req.body;
-  if (
-    !transactionOwnedBy ||
-    !docNo ||
-    !docDate ||
-    !docRefNo ||
-    !transactionType ||
-    !typeofActivity ||
-    !itemCode ||
-    !quantity ||
-    !UOM ||
-    !location ||
-    !itemTracking ||
-    !trackingDetails
-  ) {
-    response.validationError(res, "Please Send Required Data");
-  }
   try {
-    // Check For Track No is not duplicate
+    let {
+      transactionOwnedBy,
+      docNo,
+      docDate,
+      docRefNo,
+      transactionType,
+      typeofActivity,
+      itemCode,
+      itemId,
+      quantity,
+      UOM,
+      location,
+      itemTracking,
+      trackingDetails,
+    } = req.body;
+    if (
+      !transactionOwnedBy ||
+      !docNo ||
+      !docDate ||
+      !docRefNo ||
+      !transactionType ||
+      !itemCode ||
+      !itemId ||
+      !quantity ||
+      !UOM ||
+      !location ||
+      !itemTracking ||
+      !trackingDetails
+    ) {
+      response.validationError(res, "Please Send Required Data");
+      return;
+    }
     let existingTrackNos = new Set(
       (
         await itemTransaction
@@ -353,20 +355,70 @@ const addItemTracking = asynchandler(async (req, res) => {
     let newTrackingDetails = req.body.trackingDetails || [];
     for (let detail of newTrackingDetails) {
       if (existingTrackNos.has(detail.trackNo)) {
-        return response.validationError(res, "Duplicate trackNo found");
+        response.validationError(res, "Duplicate trackNo found");
+        return;
       }
     }
     let dataToSave = {
       ...req.body,
       companyId: req.user.companyId,
-      itemId: req.params.id,
+      itemId: itemId,
     };
     const newItemTransaction = await itemTransaction.create(dataToSave);
+    if (
+      transactionType === "purchase" ||
+      transactionType === "samplein" ||
+      transactionType === "adjust +ve"
+    ) {
+      const warehouse = await Warehouse.findById(req.params.id);
+      const existingItemIndex = warehouse.items.findIndex(
+        (item) => item.name.toString() === itemId
+      );
+      if (existingItemIndex === -1) {
+        const newItem = {
+          name: itemId,
+          balanceStock: quantity,
+          stockIn: [newItemTransaction._id],
+        };
+        warehouse.items.push(newItem);
+      } else {
+        const existingItem = warehouse.items[existingItemIndex];
+        existingItem.balanceStock += parseInt(quantity);
+        existingItem.stockIn.push(newItemTransaction._id);
+      }
+      await warehouse.save();
+    }
+
+    if (
+      transactionType === "sales" ||
+      transactionType === "adjust -ve" ||
+      transactionType === "sampleout" ||
+      transactionType === "lost" ||
+      transactionType === "damaged"
+    ) {
+      const warehouse = await Warehouse.findById(req.params.id);
+      const existingItemIndex = warehouse.items.findIndex(
+        (item) => item.name.toString() === itemId
+      );
+      if (existingItemIndex === -1) {
+        return response.errorResponse(res, "Item not found in warehouse");
+      }
+      const existingItem = warehouse.items[existingItemIndex];
+      if (existingItem.balanceStock < quantity) {
+        return response.errorResponse(res, "Not enough stock available");
+      }
+      existingItem.balanceStock =
+        parseInt(existingItem.balanceStock) - parseInt(quantity);
+      existingItem.stockOut.push(newItemTransaction._id);
+      await warehouse.save();
+    }
     if (newItemTransaction) {
-      return response.successResponse(res, "Transaction Added");
+      response.successResponse(res, "Transaction Added");
+      return;
     }
   } catch (e) {
     response.internalServerError(res, "Internal Server Error");
+    return;
   }
 });
 const getItemTransaction = asynchandler(async (req, res) => {
@@ -374,7 +426,8 @@ const getItemTransaction = asynchandler(async (req, res) => {
     let data = await itemTransaction
       .find({ itemId: req.params.id })
       .populate("companyId")
-      .populate("itemId");
+      .populate("itemId")
+      .populate("location");
     response.successResponse(res, data, "Data Success fully Fetched");
   } catch (e) {
     response.internalServerError(res, "Internal Server Error");
@@ -391,7 +444,6 @@ const getAllItemTransactions = asynchandler(async (req, res) => {
     response.internalServerError(res, "Internal Server Error");
   }
 });
-
 let checkTrackNo = asynchandler(async (req, res) => {
   try {
     // Check For Track No is not duplicate
@@ -405,7 +457,10 @@ let checkTrackNo = asynchandler(async (req, res) => {
     let newTrackingDetails = req.body || [];
     for (let detail of newTrackingDetails) {
       if (existingTrackNos.has(detail.trackNo)) {
-        return response.validationError(res, `Duplicate trackNo ${detail.trackNo}`);
+        return response.validationError(
+          res,
+          `Duplicate trackNo ${detail.trackNo}`
+        );
       } else {
         response.successResponse(res, "Ok");
       }

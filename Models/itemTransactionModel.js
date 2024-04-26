@@ -47,8 +47,8 @@ const itemTransactionSchema = new mongoose.Schema({
     required: true,
   },
   location: {
-    type: String,
-    required: true,
+    type: mongoose.SchemaTypes.ObjectId,
+    ref: "Warehouse",
   },
   itemTracking: {
     type: String,

@@ -11,19 +11,13 @@ const warehouseSchema = new mongoose.Schema({
   items: [
     {
       name: { type: mongoose.Schema.Types.ObjectId, ref: "Item" },
+      openingStock: { type: Number },
+      balanceStock: { type: Number },
       stockIn: [
-        {
-          from: { type: String },
-          quantity: { type: Number },
-          refrence: { type: String },
-        },
+        { type: mongoose.SchemaTypes.ObjectId, ref: "itemTransaction" },
       ],
       stockOut: [
-        {
-          quantity: { type: Number },
-          to: { type: String },
-          refrence: { type: String },
-        },
+        { type: mongoose.SchemaTypes.ObjectId, ref: "itemTransaction" },
       ],
     },
   ],

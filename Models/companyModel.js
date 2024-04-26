@@ -37,6 +37,12 @@ const companySchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  addresses: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Warehouse",
+    },
+  ],
 });
 
 const Company = mongoose.model("Company", companySchema);

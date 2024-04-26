@@ -3,10 +3,8 @@ const response = require("../Utils/resHandler");
 const asynchandler = require("express-async-handler");
 
 const getWarehouses = asynchandler(async (req, res) => {
-  console.log(1);
   try {
     let data = await Warehouse.find({ companyId: req.user.id });
-    console.log(data);
     if (data) {
       return response.successResponse(res, data, "All Warehouses Fetched");
     }
@@ -20,7 +18,7 @@ const getWarehouse = asynchandler(async (req, res) => {
     if (data.companyId != req.user.id) {
       return response.errorResponse(
         res,
-        "You are not autorized to add in this warehouse"
+        "You are not autorized to this warehouse"
       );
     }
     if (data) {

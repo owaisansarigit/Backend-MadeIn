@@ -1,9 +1,11 @@
 require("dotenv").config();
 const Company = require("../Models/companyModel");
+const Warehouse = require("../Models/warehouseModel");
 const jwt = require("jsonwebtoken");
 const response = require("../Utils/resHandler");
 const bcrypt = require("bcrypt");
 const asynchandler = require("express-async-handler");
+
 const createCompany = asynchandler(async (req, res) => {
   const { gst, phoneNumber, email, password, proprieter, companyName } =
     req.body;
@@ -67,8 +69,42 @@ const login = asynchandler(async (req, res) => {
   }
 });
 
-const verifyToken = asynchandler(async (req, res) => {
-  console.log("req at verify token");
+const addLocation = asynchandler(async (req, res) => {
+  const { name, code, location } = req.body;
+  try {
+    const companyId = req.user.companyId;
+    const newLocation = new Warehouse({
+      companyId,
+      name,
+      code,
+      location,
+    });
+    await newLocation.save();
+    await Company.findByIdAndUpdate(
+      companyId,
+      { $push: { addresses: newLocation._id } },
+      { new: true }
+    );
+    response.successResponse(res, newLocation, "Updated");
+  } catch (error) {
+    response.errorResponse(res, "Internal Server Error");
+  }
+});
+const getlocations = asynchandler(async (req, res) => {
+  try {
+    let data = await Warehouse.find({ companyId: req.user.companyId })
+      .populate("items.name")
+      .populate("items.stockIn")
+      .populate("items.stockOut");
+    response.successResponse(res, data, "Locations Fetched");
+  } catch (error) {
+    response.errorResponse(res, "Locations Fetched failed");
+  }
 });
 
-module.exports = { createCompany, login, verifyToken };
+module.exports = {
+  createCompany,
+  login,
+  addLocation,
+  getlocations,
+};
