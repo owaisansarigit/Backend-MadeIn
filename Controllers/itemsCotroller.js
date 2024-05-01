@@ -6,6 +6,7 @@ const ValidateItem = require("../Middlewares/itemValidate");
 const cloudinary = require("../Utils/cloudinary");
 const itemTransaction = require("../Models/itemTransactionModel");
 const Warehouse = require("../Models/warehouseModel");
+const StockTransfer = require("../Models/stockTransferModel");
 
 const getItem = asynchandler(async (req, res) => {
   try {
@@ -108,7 +109,6 @@ const updateItem = asynchandler(async (req, res) => {
     response.internalServerError(res, "Internal server error");
   }
 });
-
 const updatePricing = asynchandler(async (req, res) => {
   try {
     const itemId = req.params.id;
@@ -438,6 +438,7 @@ const getAllItemTransactions = asynchandler(async (req, res) => {
     let data = await itemTransaction
       .find({ companyId: req.user.companyId })
       .populate("companyId")
+      .populate("location")
       .populate("itemId");
     response.successResponse(res, data, "Data Successfully Fetched");
   } catch (e) {
@@ -469,6 +470,83 @@ let checkTrackNo = asynchandler(async (req, res) => {
     response.internalServerError(res, "Internal Server Error");
   }
 });
+// Transfer Stock
+const transferStock = async (req, res) => {
+  try {
+    const { fromLocation, toLocation, itemId, quantity } = req.body;
+    if (!fromLocation || !toLocation || !itemId || !quantity) {
+      response.errorResponse(res, "Please Send Required Field");
+      return;
+    }
+
+    const fromWarehouse = await Warehouse.findById(fromLocation);
+    const toWarehouse = await Warehouse.findById(toLocation);
+
+    if (!fromWarehouse || !toWarehouse) {
+      response.notFoundError(res, "One or both of the locations not found");
+      return;
+    }
+
+    const itemInFromWarehouse = fromWarehouse.items.find(
+      (item) => item.name.toString() === itemId
+    );
+    if (!itemInFromWarehouse || itemInFromWarehouse.balanceStock < quantity) {
+      response.notFoundError(
+        res,
+        "Item not found in the source location or insufficient stock"
+      );
+      return;
+    }
+
+    let itemInToWarehouse = toWarehouse.items.find(
+      (item) => item.name.toString() === itemId
+    );
+
+    if (!itemInToWarehouse) {
+      // Item not found in destination, create new item entry
+      itemInToWarehouse = {
+        name: itemId,
+        openingStock: 0,
+        balanceStock: 0, // Initialize with 0 as it's a new item in destination
+        stockIn: [],
+        stockOut: [],
+        stockTransfers: [],
+      };
+      toWarehouse.items.push(itemInToWarehouse);
+    }
+
+    itemInFromWarehouse.balanceStock -= parseInt(quantity);
+    itemInToWarehouse.balanceStock += parseInt(quantity);
+
+    // Save changes to both warehouses
+    await fromWarehouse.save();
+    await toWarehouse.save();
+
+    const stockTransfer = new StockTransfer({
+      fromLocation,
+      toLocation,
+      item: itemId,
+      quantity,
+      companyId: req.user.companyId,
+    });
+
+    await stockTransfer.save();
+
+    // Update stock transactions
+    itemInFromWarehouse.stockOut.push(stockTransfer._id);
+    itemInToWarehouse.stockIn.push(stockTransfer._id);
+
+    // Save changes to both warehouses again
+    await fromWarehouse.save();
+    await toWarehouse.save();
+
+    response.successResponse(res, "Stock transferred successfully");
+  } catch (error) {
+    console.error(error);
+    response.internalServerError(res, "Internal server error");
+  }
+};
+
 module.exports = {
   getItems,
   getItem,
@@ -486,4 +564,5 @@ module.exports = {
   getItemTransaction,
   getAllItemTransactions,
   checkTrackNo,
+  transferStock,
 };

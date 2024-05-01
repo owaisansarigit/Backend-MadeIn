@@ -19,6 +19,12 @@ const warehouseSchema = new mongoose.Schema({
       stockOut: [
         { type: mongoose.SchemaTypes.ObjectId, ref: "itemTransaction" },
       ],
+      stockTransfers: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "StockTransfer",
+        },
+      ],
     },
   ],
 });
