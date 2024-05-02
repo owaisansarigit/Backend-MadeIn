@@ -131,7 +131,6 @@ const updatePricing = asynchandler(async (req, res) => {
     return response.internalServerError(res, "Internal server error");
   }
 });
-
 const updateInventory = asynchandler(async (req, res) => {
   try {
     const itemId = req.params.id;
@@ -160,7 +159,6 @@ const updateInventory = asynchandler(async (req, res) => {
     return response.internalServerError(res, "Internal server error");
   }
 });
-
 const updateVender = asynchandler(async (req, res) => {
   try {
     const itemId = req.params.id;
@@ -185,7 +183,6 @@ const updateVender = asynchandler(async (req, res) => {
     return response.internalServerError(res, "Internal server error");
   }
 });
-
 const updateDimension = asynchandler(async (req, res) => {
   try {
     const itemId = req.params.id;
@@ -214,7 +211,6 @@ const updateDimension = asynchandler(async (req, res) => {
     return response.internalServerError(res, "Internal server error");
   }
 });
-
 const updateImage = asynchandler(async (req, res) => {
   try {
     const itemId = req.params.id;
@@ -246,7 +242,6 @@ const updateImage = asynchandler(async (req, res) => {
     return response.internalServerError(res, "Internal server error");
   }
 });
-
 const deleteItem = asynchandler(async (req, res) => {
   try {
     let item = await Items.findById(req.params.id);
@@ -474,7 +469,10 @@ let checkTrackNo = asynchandler(async (req, res) => {
 const transferStock = async (req, res) => {
   try {
     const { fromLocation, toLocation, itemId, quantity } = req.body;
+    console.log("Starting stock transfer process...");
+    console.log("Received request with body:", req.body);
     if (!fromLocation || !toLocation || !itemId || !quantity) {
+      console.log("Missing required fields in request.");
       response.errorResponse(res, "Please Send Required Field");
       return;
     }
@@ -483,14 +481,21 @@ const transferStock = async (req, res) => {
     const toWarehouse = await Warehouse.findById(toLocation);
 
     if (!fromWarehouse || !toWarehouse) {
+      console.log("One or both of the locations not found.");
       response.notFoundError(res, "One or both of the locations not found");
       return;
     }
 
+    console.log("Source warehouse:");
+
     const itemInFromWarehouse = fromWarehouse.items.find(
       (item) => item.name.toString() === itemId
     );
+    console.log(fromWarehouse.items);
     if (!itemInFromWarehouse || itemInFromWarehouse.balanceStock < quantity) {
+      console.log(
+        "Item not found in the source location or insufficient stock."
+      );
       response.notFoundError(
         res,
         "Item not found in the source location or insufficient stock"
@@ -501,13 +506,13 @@ const transferStock = async (req, res) => {
     let itemInToWarehouse = toWarehouse.items.find(
       (item) => item.name.toString() === itemId
     );
-
+    console.log(toWarehouse);
     if (!itemInToWarehouse) {
-      // Item not found in destination, create new item entry
+      console.log("Item not found in destination, creating new item entry...");
       itemInToWarehouse = {
-        name: itemId,
+        name: itemId.toString(),
         openingStock: 0,
-        balanceStock: 0, // Initialize with 0 as it's a new item in destination
+        balanceStock: quantity,
         stockIn: [],
         stockOut: [],
         stockTransfers: [],
@@ -515,12 +520,16 @@ const transferStock = async (req, res) => {
       toWarehouse.items.push(itemInToWarehouse);
     }
 
+    console.log("Updated destination warehouse:");
+
     itemInFromWarehouse.balanceStock -= parseInt(quantity);
     itemInToWarehouse.balanceStock += parseInt(quantity);
 
     // Save changes to both warehouses
     await fromWarehouse.save();
     await toWarehouse.save();
+
+    console.log("Stock quantities updated in both warehouses.");
 
     const stockTransfer = new StockTransfer({
       fromLocation,
@@ -532,6 +541,8 @@ const transferStock = async (req, res) => {
 
     await stockTransfer.save();
 
+    console.log("Stock transfer record saved:");
+
     // Update stock transactions
     itemInFromWarehouse.stockOut.push(stockTransfer._id);
     itemInToWarehouse.stockIn.push(stockTransfer._id);
@@ -539,6 +550,8 @@ const transferStock = async (req, res) => {
     // Save changes to both warehouses again
     await fromWarehouse.save();
     await toWarehouse.save();
+
+    console.log("Stock transactions updated in both warehouses.");
 
     response.successResponse(res, "Stock transferred successfully");
   } catch (error) {

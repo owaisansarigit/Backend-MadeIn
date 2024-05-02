@@ -71,6 +71,10 @@ const login = asynchandler(async (req, res) => {
 
 const addLocation = asynchandler(async (req, res) => {
   const { name, code, location } = req.body;
+  if (!name || !code || !location) {
+    response.validationError(res, "Please Send Required Data");
+    return;
+  }
   try {
     const companyId = req.user.companyId;
     const newLocation = new Warehouse({
@@ -90,12 +94,14 @@ const addLocation = asynchandler(async (req, res) => {
     response.errorResponse(res, "Internal Server Error");
   }
 });
+
 const getlocations = asynchandler(async (req, res) => {
   try {
     let data = await Warehouse.find({ companyId: req.user.companyId })
       .populate("items.name")
       .populate("items.stockIn")
-      .populate("items.stockOut");
+      .populate("items.stockOut")
+      // .populate("items.stockTransfers");
     response.successResponse(res, data, "Locations Fetched");
   } catch (error) {
     response.errorResponse(res, "Locations Fetched failed");
