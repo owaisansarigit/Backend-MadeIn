@@ -491,7 +491,6 @@ const transferStock = async (req, res) => {
     const itemInFromWarehouse = fromWarehouse.items.find(
       (item) => item.name.toString() === itemId
     );
-    console.log(fromWarehouse.items);
     if (!itemInFromWarehouse || itemInFromWarehouse.balanceStock < quantity) {
       console.log(
         "Item not found in the source location or insufficient stock."
@@ -506,7 +505,6 @@ const transferStock = async (req, res) => {
     let itemInToWarehouse = toWarehouse.items.find(
       (item) => item.name.toString() === itemId
     );
-    console.log(toWarehouse);
     if (!itemInToWarehouse) {
       console.log("Item not found in destination, creating new item entry...");
       itemInToWarehouse = {
