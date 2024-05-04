@@ -80,7 +80,6 @@ const addPurchase = asynchandler(async (req, res) => {
     };
 
     const serialNo = await generateSerialNumber();
-    console.log(items);
     // Create new purchase object with serial number and company ID
     const purchase = new Purchase({
       companyId: req.user.companyId,
@@ -112,49 +111,15 @@ const addPurchase = asynchandler(async (req, res) => {
       UOM,
       location,
     };
-    // Add Item Transaction
-    // const newItemTransaction = await itemTransaction.create(dataToSave);
-    // let existingTrackNos = new Set(
-    //   (
-    //     await itemTransaction
-    //       .find({ companyId: req.user.companyId })
-    //       .distinct("trackingDetails.trackNo")
-    //   ).flat()
-    // );
-    // let newTrackingDetails = req.body.trackingDetails || [];
-    // for (let detail of newTrackingDetails) {
-    //   if (existingTrackNos.has(detail.trackNo)) {
-    //     response.validationError(res, "Duplicate trackNo found");
-    //     return;
-    //   }
-    // }
-    // const warehouse = await Warehouse.findById(location);
-    // const existingItemIndex = warehouse.items.findIndex(
-    //   (item) => item.name.toString() === itemId
-    // );
-    // if (existingItemIndex === -1) {
-    //   const newItem = {
-    //     name: itemId,
-    //     balanceStock: quantity,
-    //     stockIn: [newItemTransaction._id],
-    //   };
-    //   warehouse.items.push(newItem);
-    // } else {
-    //   const existingItem = warehouse.items[existingItemIndex];
-    //   existingItem.balanceStock += parseInt(quantity);
-    //   existingItem.stockIn.push(newItemTransaction._id);
-    // }
-    // await warehouse.save();
+    // its new for add item transaction
 
-    // its new
-
-    for (const item of items) {
-      const { itemId, quantity, UOM } = item;
+    for (const item1 of items) {
+      const { item, quantity, itemCode } = item1;
 
       // Create data for item transaction
       const dataToSave = {
         companyId: req.user.companyId,
-        itemId,
+        itemId: item,
         transactionOwnedBy,
         docNo,
         docDate,
@@ -167,20 +132,25 @@ const addPurchase = asynchandler(async (req, res) => {
       };
 
       // Create item transaction
-      await itemTransaction.create(dataToSave);
+      const itemTransactions = await itemTransaction.create(dataToSave);
 
       // Update warehouse quantity
       const warehouse = await Warehouse.findById(location);
-      const existingItemIndex = warehouse.items.findIndex(
-        (item) => item.name.toString() === itemId
+      const existingItem = warehouse.items.find(
+        (e) => e.name.toString() === item.toString()
       );
-
-      if (existingItemIndex === -1) {
-        // If the item does not exist in the warehouse, add it
-        warehouse.items.push({ name: itemId, balanceStock: quantity });
+      if (!existingItem) {
+        const newItem = {
+          name: itemId,
+          itemCode,
+          balanceStock: quantity,
+          stockIn: [itemTransactions._id],
+        };
+        warehouse.items.push(newItem);
       } else {
         // If the item exists, update its quantity
-        warehouse.items[existingItemIndex].balanceStock += quantity;
+        existingItem.balanceStock += parseInt(quantity);
+        existingItem.stockIn.push(itemTransactions._id);
       }
 
       // Save the updated warehouse
