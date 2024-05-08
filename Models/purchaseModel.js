@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const PurchaseSchema = new mongoose.Schema({
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -11,7 +10,6 @@ const PurchaseSchema = new mongoose.Schema({
     required: true,
     ref: "Customer",
   },
-  itemId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "Item" },
   items: [
     {
       item: {
@@ -25,8 +23,6 @@ const PurchaseSchema = new mongoose.Schema({
     },
   ],
   serialNo: { type: Number, required: true },
-  // quantity: { type: Number, required: true },
-  // rate: { type: Number },
   referenceNo: { type: String, required: true },
   taxableAmount: { type: Number, required: true },
   cgst: { type: Number },
@@ -34,7 +30,5 @@ const PurchaseSchema = new mongoose.Schema({
   igst: { type: Number },
   total: { type: Number, required: true },
 });
-
-const Purchase = mongoose.model("Purchase", PurchaseSchema);
-
+const Purchase = mongoose.model("Purchase", PurchaseSchema);  
 module.exports = Purchase;

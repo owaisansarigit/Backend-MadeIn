@@ -42,12 +42,9 @@ const getPurchase = asynchandler(async (req, res) => {
 const addPurchase = asynchandler(async (req, res) => {
   try {
     const {
-      itemId,
-      itemCode,
       supplier,
       referenceNo,
       taxableAmount,
-      quantity,
       rate,
       cgst,
       sgst,
@@ -60,7 +57,6 @@ const addPurchase = asynchandler(async (req, res) => {
       docNo,
       docDate,
       docRefNo,
-      UOM,
       items,
     } = req.body;
 
@@ -69,25 +65,19 @@ const addPurchase = asynchandler(async (req, res) => {
 
       let newSerialNo;
       if (purchases.length === 0) {
-        // If no previous purchases found, start with 1
         newSerialNo = 1;
       } else {
-        // Increment based on the number of existing purchases
         newSerialNo = purchases.length + 1;
       }
-
       return newSerialNo;
     };
 
     const serialNo = await generateSerialNumber();
-    // Create new purchase object with serial number and company ID
     const purchase = new Purchase({
       companyId: req.user.companyId,
       serialNo,
-      itemId,
       supplier,
       referenceNo,
-      quantity,
       taxableAmount,
       rate,
       cgst,
@@ -96,23 +86,8 @@ const addPurchase = asynchandler(async (req, res) => {
       total,
       items,
     });
-    // Data For save trcking transaction
-    let dataToSave = {
-      companyId: req.user.companyId,
-      itemId,
-      transactionOwnedBy,
-      docNo,
-      docDate,
-      docRefNo,
-      transactionType,
-      typeofActivity,
-      itemCode,
-      quantity,
-      UOM,
-      location,
-    };
-    // its new for add item transaction
 
+    // its new for add item transaction
     for (const item1 of items) {
       const { item, quantity, itemCode } = item1;
 
@@ -127,7 +102,6 @@ const addPurchase = asynchandler(async (req, res) => {
         transactionType,
         typeofActivity,
         quantity,
-        UOM,
         location,
       };
 
@@ -141,7 +115,7 @@ const addPurchase = asynchandler(async (req, res) => {
       );
       if (!existingItem) {
         const newItem = {
-          name: itemId,
+          name: item,
           itemCode,
           balanceStock: quantity,
           stockIn: [itemTransactions._id],
