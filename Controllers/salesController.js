@@ -31,7 +31,6 @@ const getSale = asynchandler(async (req, res) => {
   }
 });
 
-// Add a new sale
 const addSale = asynchandler(async (req, res) => {
   try {
     const {
@@ -63,7 +62,6 @@ const addSale = asynchandler(async (req, res) => {
     };
     const serialNo = await generateSerialNumber();
 
-    // Create new sales object with serial number and company ID
     const sales = new Sale({
       companyId: req.user.companyId,
       serialNo,
@@ -80,34 +78,23 @@ const addSale = asynchandler(async (req, res) => {
       items,
     });
 
-    // Handle individual items in the sales
     for (const item1 of items) {
-      const { item, quantity, location } = item1;
-
-      // Find the warehouse
+      const { item, quantity, trackingDetails, location } = item1;
       const warehouse = await Warehouse.findById(location);
 
-      // Find the item in the warehouse
       const existingItem = warehouse.items.find(
         (e) => e.name.toString() === item.toString()
       );
-
-      // Ensure the item exists in the warehouse
       if (!existingItem) {
-        // Handle the error appropriately, such as sending an error response
         return response.errorResponse(res, "Item not found in warehouse");
       }
-
-      // Check if the requested quantity exceeds the available stock
       if (quantity > existingItem.balanceStock) {
-        // Handle the error appropriately, such as sending an error response
         return response.errorResponse(
           res,
           "Requested quantity exceeds available stock"
         );
       }
 
-      // Create data for item transaction
       const dataToSave = {
         companyId: req.user.companyId,
         itemId: item,
@@ -121,14 +108,18 @@ const addSale = asynchandler(async (req, res) => {
         location,
       };
 
-      // Create item transaction
+      for (const trackNo of trackingDetails) {
+        await itemTransaction.updateMany(
+          { "trackingDetails.trackNo": trackNo },
+          { $set: { "trackingDetails.$.available": false } }
+        );
+      }
+
       const itemTransactions = await itemTransaction.create(dataToSave);
 
-      // Update the item's quantity in the warehouse
       existingItem.balanceStock -= parseInt(quantity);
       existingItem.stockOut.push(itemTransactions._id);
 
-      // Save the updated warehouse
       await warehouse.save();
     }
 
@@ -139,6 +130,7 @@ const addSale = asynchandler(async (req, res) => {
       "Sales and transaction created successfully"
     );
   } catch (error) {
+    console.log(error);
     response.errorResponse(res, error.message);
   }
 });
@@ -154,7 +146,7 @@ const editSale = asynchandler(async (req, res) => {
     const sale = await Sale.findById(req.params.id);
     if (sale) {
       // Update sale details
-      sale.customerId = customerId;
+      sale.customer = customerId;
       sale.itemId = itemId;
       sale.quantity = quantity;
       sale.rate = rate;

@@ -61,6 +61,7 @@ const createItem = asynchandler(async (req, res) => {
       BOMRef: req.body.BOMRef,
       Pricing: req.body.Pricing,
       inventory: req.body.inventory,
+      trackingType: req.body.trackingType,
       image: img,
     };
     const data = await Items.create(dataToSave);
@@ -70,6 +71,7 @@ const createItem = asynchandler(async (req, res) => {
     response.internalServerError(res, "Internal server error");
   }
 });
+
 const updateItem = asynchandler(async (req, res) => {
   try {
     const itemId = req.params.id;
@@ -109,6 +111,7 @@ const updateItem = asynchandler(async (req, res) => {
     response.internalServerError(res, "Internal server error");
   }
 });
+
 const updatePricing = asynchandler(async (req, res) => {
   try {
     const itemId = req.params.id;
@@ -131,6 +134,7 @@ const updatePricing = asynchandler(async (req, res) => {
     return response.internalServerError(res, "Internal server error");
   }
 });
+
 const updateInventory = asynchandler(async (req, res) => {
   try {
     const itemId = req.params.id;
@@ -159,6 +163,7 @@ const updateInventory = asynchandler(async (req, res) => {
     return response.internalServerError(res, "Internal server error");
   }
 });
+
 const updateVender = asynchandler(async (req, res) => {
   try {
     const itemId = req.params.id;
@@ -183,6 +188,7 @@ const updateVender = asynchandler(async (req, res) => {
     return response.internalServerError(res, "Internal server error");
   }
 });
+
 const updateDimension = asynchandler(async (req, res) => {
   try {
     const itemId = req.params.id;
@@ -211,6 +217,7 @@ const updateDimension = asynchandler(async (req, res) => {
     return response.internalServerError(res, "Internal server error");
   }
 });
+
 const updateImage = asynchandler(async (req, res) => {
   try {
     const itemId = req.params.id;
@@ -242,6 +249,7 @@ const updateImage = asynchandler(async (req, res) => {
     return response.internalServerError(res, "Internal server error");
   }
 });
+
 const deleteItem = asynchandler(async (req, res) => {
   try {
     let item = await Items.findById(req.params.id);
@@ -309,30 +317,23 @@ const createHSN = asynchandler(async (req, res) => {
 const addItemTracking = asynchandler(async (req, res) => {
   try {
     let {
-      transactionOwnedBy,
       docNo,
       docDate,
       docRefNo,
       transactionType,
-      typeofActivity,
-      itemCode,
       itemId,
       quantity,
-      UOM,
       location,
       itemTracking,
       trackingDetails,
     } = req.body;
     if (
-      !transactionOwnedBy ||
       !docNo ||
       !docDate ||
       !docRefNo ||
       !transactionType ||
-      !itemCode ||
       !itemId ||
       !quantity ||
-      !UOM ||
       !location ||
       !itemTracking ||
       !trackingDetails
@@ -451,18 +452,30 @@ let checkTrackNo = asynchandler(async (req, res) => {
       ).flat()
     );
     let newTrackingDetails = req.body || [];
+    console.log(newTrackingDetails);
     for (let detail of newTrackingDetails) {
+      if (detail.trackNo === "") {
+        response.validationError(res, "Please Enter Track No");
+        return;
+      }
+
       if (existingTrackNos.has(detail.trackNo)) {
-        return response.validationError(
-          res,
-          `Duplicate trackNo ${detail.trackNo}`
-        );
-      } else {
-        response.successResponse(res, "Ok");
+        // response.validationError(res, `Duplicate trackNo ${detail.trackNo}`);
+        res
+          .status(400)
+          .json({
+            message: `Duplicate trackNo ${detail.trackNo}`,
+            duplicateTrackNo: detail.trackNo,
+          });
+        return;
       }
     }
+
+    // If no validation errors found, return success response
+    response.successResponse(res, "Ok");
   } catch (error) {
     response.internalServerError(res, "Internal Server Error");
+    return;
   }
 });
 // Transfer Stock

@@ -7,6 +7,7 @@ const itemValidationSchema = Joi.object({
   category: Joi.string().required(),
   subcategory: Joi.string().required(),
   brand: Joi.string().required(),
+  trackingType: Joi.string().required(),
   primaryUOM: Joi.string().required(),
   secoundaryUOM: Joi.string(),
   HSNcode: Joi.number(),

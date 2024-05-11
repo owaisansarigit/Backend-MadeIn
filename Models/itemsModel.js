@@ -8,7 +8,6 @@ const itemSchema = new mongoose.Schema({
   itemCode: {
     type: String,
     required: true,
-    unique: true,
   },
   itemName: {
     type: String,
@@ -47,6 +46,9 @@ const itemSchema = new mongoose.Schema({
     type: String,
   },
   image: {
+    type: String,
+  },
+  trackingType:{
     type: String,
   },
   Pricing: {

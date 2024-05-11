@@ -89,18 +89,19 @@ const addPurchase = asynchandler(async (req, res) => {
 
     // its new for add item transaction
     for (const item1 of items) {
-      const { item, quantity, itemCode } = item1;
+      const { item, quantity, itemCode , trackingDetails } = item1;
+
+      console.log(trackingDetails)
 
       // Create data for item transaction
       const dataToSave = {
         companyId: req.user.companyId,
         itemId: item,
-        transactionOwnedBy,
+        trackingDetails,
         docNo,
         docDate,
         docRefNo,
         transactionType,
-        typeofActivity,
         quantity,
         location,
       };
