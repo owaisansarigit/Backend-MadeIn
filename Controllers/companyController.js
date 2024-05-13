@@ -52,7 +52,6 @@ const login = asynchandler(async (req, res) => {
   const { email, password } = req.body;
   try {
     const company = await Company.findOne({ email });
-    console.log(req.body);
     if (!company) {
       // let;
       return response.errorResponse(res, "Invalid email or password");
