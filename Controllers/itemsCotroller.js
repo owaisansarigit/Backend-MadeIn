@@ -452,6 +452,7 @@ let checkTrackNo = asynchandler(async (req, res) => {
       ).flat()
     );
     let newTrackingDetails = req.body || [];
+    console.log(newTrackingDetails);
     for (let detail of newTrackingDetails) {
       if (detail.trackNo === "") {
         response.validationError(res, "Please Enter Track No");
