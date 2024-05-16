@@ -53,6 +53,7 @@ const login = asynchandler(async (req, res) => {
   try {
     const company = await Company.findOne({ email });
     if (!company) {
+      // let;
       return response.errorResponse(res, "Invalid email or password");
     }
     const passwordMatch = await bcrypt.compare(password, company.password);
@@ -71,6 +72,10 @@ const login = asynchandler(async (req, res) => {
 
 const addLocation = asynchandler(async (req, res) => {
   const { name, code, location } = req.body;
+  if (!name || !code || !location) {
+    response.validationError(res, "Please Send Required Data");
+    return;
+  }
   try {
     const companyId = req.user.companyId;
     const newLocation = new Warehouse({
@@ -90,15 +95,72 @@ const addLocation = asynchandler(async (req, res) => {
     response.errorResponse(res, "Internal Server Error");
   }
 });
+
 const getlocations = asynchandler(async (req, res) => {
   try {
     let data = await Warehouse.find({ companyId: req.user.companyId })
       .populate("items.name")
       .populate("items.stockIn")
       .populate("items.stockOut");
+    // .populate("items.stockTransfers");
     response.successResponse(res, data, "Locations Fetched");
   } catch (error) {
     response.errorResponse(res, "Locations Fetched failed");
+  }
+});
+
+const getUsers = asynchandler(async (req, res) => {
+  try {
+    let company = await Company.findById(req.user.companyId);
+    response.successResponse(res, company.users, "Data Fetched Succesfully");
+  } catch (error) {
+    response.internalServerError(res, "internal server error");
+  }
+});
+
+const createUser = asynchandler(async (req, res) => {
+  try {
+    let { username, name, password } = req.body;
+    if (!username || !name || !password) {
+      return response.validationError(res, "Please send required data");
+    }
+
+    let company = await Company.findById(req.user.companyId);
+    let allCompanies = await Company.find();
+
+    let duplicateFound = false;
+
+    // Check for duplicate usernames
+    allCompanies.forEach((element) => {
+      if (duplicateFound) return;
+      if (username === element.email) {
+        response.errorResponse(res, "Use different username");
+        duplicateFound = true;
+        return;
+      }
+      element.users.forEach((user) => {
+        if (duplicateFound) return;
+        if (username === user.username) {
+          response.errorResponse(res, "Use different username");
+          duplicateFound = true;
+          return;
+        }
+      });
+    });
+
+    if (duplicateFound) return;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    let dataForSave = {
+      ...req.body,
+      password: hashedPassword,
+    };
+    company.users.push(dataForSave);
+    await company.save();
+    response.successResponse(res, company, "User added");
+  } catch (error) {
+    console.log(error);
+    response.internalServerError(res, "Internal Server Error");
   }
 });
 
@@ -107,4 +169,6 @@ module.exports = {
   login,
   addLocation,
   getlocations,
+  getUsers,
+  createUser,
 };

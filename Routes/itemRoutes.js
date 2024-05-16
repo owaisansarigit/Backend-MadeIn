@@ -16,6 +16,7 @@ const {
   getItemTransaction,
   getAllItemTransactions,
   checkTrackNo,
+  transferStock,
 } = require("../Controllers/itemsCotroller");
 const router = express.Router();
 const multer = require("multer");
@@ -40,4 +41,5 @@ router.put("/:id/addtracking", verifyToken, addItemTracking);
 router.get("/getItemTransaction/:id", verifyToken, getItemTransaction);
 router.get("/item/getallitemtransactions", verifyToken, getAllItemTransactions);
 router.post("/item/checktrackno", verifyToken, checkTrackNo);
+router.post("/item/stocktransfer", verifyToken, transferStock);
 module.exports = router;
