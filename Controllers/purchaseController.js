@@ -50,13 +50,7 @@ const addPurchase = asynchandler(async (req, res) => {
       sgst,
       igst,
       total,
-<<<<<<< HEAD
       transactionType,
-=======
-      transactionOwnedBy,
-      transactionType,
-      typeofActivity,
->>>>>>> bcc256d10ebc729f037adddd54b5c74802c17e43
       location,
       docNo,
       docDate,
@@ -93,15 +87,9 @@ const addPurchase = asynchandler(async (req, res) => {
 
     // its new for add item transaction
     for (const item1 of items) {
-<<<<<<< HEAD
       const { item, quantity, itemCode, trackingDetails } = item1;
 
       console.log(trackingDetails);
-=======
-      const { item, quantity, itemCode , trackingDetails } = item1;
-
-      console.log(trackingDetails)
->>>>>>> bcc256d10ebc729f037adddd54b5c74802c17e43
 
       // Create data for item transaction
       const dataToSave = {
