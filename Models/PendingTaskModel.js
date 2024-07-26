@@ -13,7 +13,7 @@ const PendingTaskSchema = new mongoose.Schema({
   },
   firstApproove: { type: Boolean, default: false },
   finalApproove: { type: Boolean, default: false },
-  type: { type: Boolean, default: false },
+  type: { type: String, required: true },
   endPoint: { type: String, required: true },
   data: {},
 });

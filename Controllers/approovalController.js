@@ -41,7 +41,7 @@ const getTask = asynchandler(async (req, res) => {
       return response.successResponse(res, tasks, "Data fetched successfully");
     }
 
-    return response.notFoundError(res, "Data not found");
+    return response.successResponse(res,tasks, "Data not found");
   } catch (e) {
     console.error(e);
     response.errorResponse(res, "Internal server error");
