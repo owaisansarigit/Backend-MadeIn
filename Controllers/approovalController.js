@@ -31,17 +31,17 @@ const createTask = asynchandler(async (req, res) => {
 });
 const getTask = asynchandler(async (req, res) => {
   try {
-    const userId = req.userId;
-
+    const userId = req.user.userId;
     const tasks = await PendingTask.find({
       $or: [{ firstApproover: userId }, { finalApproover: userId }],
-    });
-
+    })
+      .populate("firstApproover")
+      .populate("finalApproover");
     if (tasks.length > 0) {
       return response.successResponse(res, tasks, "Data fetched successfully");
     }
 
-    return response.successResponse(res,tasks, "Data not found");
+    return response.successResponse(res, tasks, "Data not found");
   } catch (e) {
     console.error(e);
     response.errorResponse(res, "Internal server error");
@@ -51,25 +51,36 @@ const getTask = asynchandler(async (req, res) => {
 const updateTask = asynchandler(async (req, res) => {
   try {
     const { taskId } = req.params;
-    const userId = req.userId;
-    let task = await PendingTask.findById(taskId);
+    const userId = req.user.userId;
 
-    if (task.firstApprooval === false) {
-      if (task.firstApproover === userId) {
-        task.firstApprooval = true;
-        return response.successResponse(res, task, "Task updated successfully");
-      }
+    let task = await PendingTask.findById(taskId);
+    if (!task) {
+      return response.errorResponse(res, "Task not found");
     }
-    if (task.finalApprooval === false) {
-      if (task.finalApproover === userId) {
-        task.finalApprooval = true;
-        return response.successResponse(res, task, "Task updated successfully");
-      }
+    // Check and update the first approval
+    if (!task.firstApproove && task.firstApproover == userId) {
+      task.firstApproove = true;
+      await task.save();
+      return response.successResponse(
+        res,
+        task,
+        "Task first approval updated successfully"
+      );
     }
-    return response.notFoundError(res, "Task not found");
+    // Check and update the final approval
+    if (!task.finalApproove && task.finalApproover == userId) {
+      task.finalApproove = true;
+      await task.save();
+      return response.successResponse(
+        res,
+        task,
+        "Task final approval updated successfully"
+      );
+    }
+    return response.errorResponse(res, "No approval action taken");
   } catch (e) {
     console.error(e);
-    response.errorResponse(res, "Internal server error");
+    return response.errorResponse(res, "Internal server error");
   }
 });
 

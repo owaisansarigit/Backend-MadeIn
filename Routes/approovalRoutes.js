@@ -10,7 +10,7 @@ const {
 
 router.get("/", verifyToken, getTask);
 router.post("/", verifyToken, createTask);
-router.put("/:taskId", verifyToken, updateTask);
+router.post("/:taskId", verifyToken, updateTask);
 router.delete("/:taskId", verifyToken, deleteTask);
 
 module.exports = router;

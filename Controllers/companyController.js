@@ -64,7 +64,7 @@ const login = asynchandler(async (req, res) => {
         );
         return response.successResponse(
           res,
-          { token, company: { ...company, isAdmin: true } },
+          { token, company: { ...company, isAdmin: true, myId: company._id } },
           "Company login successful"
         );
       }
@@ -87,7 +87,10 @@ const login = asynchandler(async (req, res) => {
         );
         return response.successResponse(
           res,
-          { token, company: { ...user.company, isAdmin: false } },
+          {
+            token,
+            company: { ...user.company, isAdmin: false, myId: user._id },
+          },
           "User login successful"
         );
       }
