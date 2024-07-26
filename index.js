@@ -20,6 +20,7 @@ app.use("/api/dimension", require("./Routes/dimensionRoutes"));
 app.use("/api/warehouse", require("./Routes/warehouseRoutes"));
 app.use("/api/purchase", require("./Routes/purchaseRoutes"));
 app.use("/api/sales", require("./Routes/salesRoutes"));
+app.use("/api/approoval", require("./Routes/approovalRoutes"));
 
 app.get("/", (req, res) => {
   res.status(200).json({ message: "MadeIn server is running" });

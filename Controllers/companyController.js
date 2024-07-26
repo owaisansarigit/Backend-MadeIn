@@ -1,6 +1,7 @@
 require("dotenv").config();
 const Company = require("../Models/companyModel");
 const Warehouse = require("../Models/warehouseModel");
+const User = require("../Models/usersModel");
 const jwt = require("jsonwebtoken");
 const response = require("../Utils/resHandler");
 const bcrypt = require("bcrypt");
@@ -51,19 +52,49 @@ const createCompany = asynchandler(async (req, res) => {
 const login = asynchandler(async (req, res) => {
   const { email, password } = req.body;
   try {
+    // Check if the email belongs to a company
     const company = await Company.findOne({ email });
-    if (!company) {
-      // let;
-      return response.errorResponse(res, "Invalid email or password");
+    if (company) {
+      const passwordMatch = await bcrypt.compare(password, company.password);
+      if (passwordMatch) {
+        const token = jwt.sign(
+          { companyId: company._id, userId: company._id, company: company },
+          process.env.JWTSECRET,
+          { expiresIn: "1d" }
+        );
+        return response.successResponse(
+          res,
+          { token, company: { ...company, isAdmin: true } },
+          "Company login successful"
+        );
+      }
     }
-    const passwordMatch = await bcrypt.compare(password, company.password);
-    if (!passwordMatch) {
-      return response.errorResponse(res, "Invalid email or password");
+
+    const user = await User.findOne({ email }).populate("company");
+    if (user) {
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      if (passwordMatch) {
+        const token = jwt.sign(
+          {
+            companyId: user.company._id,
+            userId: user._id,
+            company: user.company,
+          },
+          process.env.JWTSECRET,
+          {
+            expiresIn: "1d",
+          }
+        );
+        return response.successResponse(
+          res,
+          { token, company: { ...user.company, isAdmin: false } },
+          "User login successful"
+        );
+      }
     }
-    const token = jwt.sign({ companyId: company._id }, process.env.JWTSECRET, {
-      expiresIn: "1d",
-    });
-    response.successResponse(res, { token, company }, "Login successful");
+
+    // If neither company nor user found or password didn't match, return error
+    return response.errorResponse(res, "Invalid email or password");
   } catch (error) {
     console.error(error);
     response.internalServerError(res, "Internal server error");
@@ -111,8 +142,8 @@ const getlocations = asynchandler(async (req, res) => {
 
 const getUsers = asynchandler(async (req, res) => {
   try {
-    let company = await Company.findById(req.user.companyId);
-    response.successResponse(res, company.users, "Data Fetched Succesfully");
+    let users = await User.find({ company: req.user.company._id });
+    response.successResponse(res, users, "Data Fetched Succesfully");
   } catch (error) {
     response.internalServerError(res, "internal server error");
   }
@@ -125,38 +156,49 @@ const createUser = asynchandler(async (req, res) => {
       return response.validationError(res, "Please send required data");
     }
 
+    // Check if a user with the same email already exists
+    let existingUser = await User.findOne({ email: username });
+    if (existingUser) {
+      return response.validationError(
+        res,
+        "User with this email already exists"
+      );
+    }
+
+    // Check if a company with the same email already exists
+    let existingCompany = await Company.findOne({ email: username });
+    if (existingCompany) {
+      return response.validationError(
+        res,
+        "Company with this email already exists"
+      );
+    }
+
+    // Attempt to find the company associated with the request user
     let company = await Company.findById(req.user.companyId);
-    let allCompanies = await Company.find();
 
-    let duplicateFound = false;
-
-    // Check for duplicate usernames
-    allCompanies.forEach((element) => {
-      if (duplicateFound) return;
-      if (username === element.email) {
-        response.errorResponse(res, "Use different username");
-        duplicateFound = true;
-        return;
-      }
-      element.users.forEach((user) => {
-        if (duplicateFound) return;
-        if (username === user.username) {
-          response.errorResponse(res, "Use different username");
-          duplicateFound = true;
-          return;
-        }
+    // If company doesn't exist, create a new one
+    if (!company) {
+      company = await Company.create({
+        _id: req.user.companyId,
+        name: "Default Company Name",
       });
-    });
+    }
 
-    if (duplicateFound) return;
-
+    // Now, proceed with creating the user
     const hashedPassword = await bcrypt.hash(password, 10);
     let dataForSave = {
-      ...req.body,
+      name,
+      email: username,
+      company: req.user.companyId,
       password: hashedPassword,
     };
-    company.users.push(dataForSave);
+
+    let newUser = await User.create(dataForSave);
+
+    company.users.push(newUser._id);
     await company.save();
+
     response.successResponse(res, company, "User added");
   } catch (error) {
     console.log(error);

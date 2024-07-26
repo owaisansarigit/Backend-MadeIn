@@ -26,9 +26,8 @@ const companySchema = new mongoose.Schema({
   },
   users: [
     {
-      username: { type: String, required: true },
-      name: { type: String, required: true },
-      password: { type: String, required: true },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
   ],
   password: {
