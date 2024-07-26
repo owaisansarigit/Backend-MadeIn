@@ -23,7 +23,7 @@ app.use("/api/sales", require("./Routes/salesRoutes"));
 app.use("/api/approoval", require("./Routes/approovalRoutes"));
 
 app.get("/", (req, res) => {
-  res.status(200).json({ message: "MadeIn server is running" });
+  res.status(200).json({ message: "MadeIn server is running by OD" });
 });
 connectDB(process.env.MONGO_URI);
 app.listen(port, () => {
