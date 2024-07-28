@@ -40,7 +40,6 @@ const getTask = asynchandler(async (req, res) => {
     if (tasks.length > 0) {
       return response.successResponse(res, tasks, "Data fetched successfully");
     }
-
     return response.successResponse(res, tasks, "Data not found");
   } catch (e) {
     console.error(e);
