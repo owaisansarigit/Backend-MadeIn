@@ -14,9 +14,16 @@ app.use("/api/items", require("./Routes/itemRoutes"));
 app.use("/api/customer", require("./Routes/customerRoutes"));
 app.use("/api/bom", require("./Routes/BOMRoutes"));
 app.use("/api/cip", require("./Routes/CIPRoutes"));
+app.use("/api/itemscat", require("./Routes/itemCatRoutes"));
+app.use("/api/company", require("./Routes/companyRoutes"));
+app.use("/api/dimension", require("./Routes/dimensionRoutes"));
+app.use("/api/warehouse", require("./Routes/warehouseRoutes"));
+app.use("/api/purchase", require("./Routes/purchaseRoutes"));
+app.use("/api/sales", require("./Routes/salesRoutes"));
+app.use("/api/approoval", require("./Routes/approovalRoutes"));
 
 app.get("/", (req, res) => {
-  res.status(200).json({ message: "MadeIn server is running" });
+  res.status(200).json({ message: "MadeIn server is running by OD" });
 });
 connectDB(process.env.MONGO_URI);
 app.listen(port, () => {

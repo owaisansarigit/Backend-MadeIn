@@ -1,7 +1,7 @@
 const successResponse = (res, data, message) => {
   res.status(200).json({ message: message, statusCode: 200, data: data });
 };
-const errorResponse = (res, message, statusCode) => {
+const errorResponse = (res, message, statusCode = 400) => {
   res.status(statusCode).json({ message: message, statusCode: statusCode });
 };
 const internalServerError = (res, message) => {

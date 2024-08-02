@@ -1,9 +1,13 @@
 const mongoose = require("mongoose");
 const itemSchema = new mongoose.Schema({
+  companyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "Company",
+  },
   itemCode: {
     type: String,
     required: true,
-    unique: true,
   },
   itemName: {
     type: String,
@@ -42,6 +46,9 @@ const itemSchema = new mongoose.Schema({
     type: String,
   },
   image: {
+    type: String,
+  },
+  trackingType:{
     type: String,
   },
   Pricing: {

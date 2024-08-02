@@ -5,13 +5,17 @@ const {
   createCustomer,
   updateCustomer,
   deleteCustomer,
+  addContactPerson,
+  addAdress,
 } = require("../Controllers/customerController");
+const { verifyToken } = require("../Utils/jwt");
 const router = express.Router();
-
-router.get("/", getCustomers);
-router.get("/:id", getCustomer);
-router.post("/", createCustomer);
-router.put("/:id", updateCustomer);
-router.delete("/:id", deleteCustomer);
+router.get("/", verifyToken, getCustomers);
+router.get("/:id", verifyToken, getCustomer);
+router.post("/", verifyToken, createCustomer);
+router.put("/addcontactperson/:id", verifyToken, addContactPerson);
+router.put("/addAdress/:id", verifyToken, addAdress);
+router.put("/:id", verifyToken, updateCustomer);
+router.delete("/:id", verifyToken, deleteCustomer);
 
 module.exports = router;
