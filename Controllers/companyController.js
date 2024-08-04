@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const response = require("../Utils/resHandler");
 const bcrypt = require("bcrypt");
 const asynchandler = require("express-async-handler");
+const DocumentList = require("../Models/DocomentList");
 
 const createCompany = asynchandler(async (req, res) => {
   const { gst, phoneNumber, email, password, proprieter, companyName } =
@@ -42,6 +43,8 @@ const createCompany = asynchandler(async (req, res) => {
       proprieter,
       companyName,
     });
+    await DocumentList.create({ companyId: newCompany._id, type: "purchase" });
+    await DocumentList.create({ companyId: newCompany._id, type: "sales" });
     response.successResponse(res, newCompany, "Company created successfully");
   } catch (error) {
     console.error(error);
