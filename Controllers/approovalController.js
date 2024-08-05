@@ -9,7 +9,6 @@ const createTask = asynchandler(async (req, res) => {
     if (!firstApproover || !finalApproover || !endPoint || !data || !type) {
       response.errorResponse(res, "Please Send All Details");
     }
-
     const newTask = new PendingTask({
       firstApproover,
       finalApproover,
@@ -29,6 +28,7 @@ const createTask = asynchandler(async (req, res) => {
     response.errorResponse(res, "Internal server error");
   }
 });
+
 const getTask = asynchandler(async (req, res) => {
   try {
     const userId = req.user.userId;

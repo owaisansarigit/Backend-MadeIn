@@ -34,7 +34,6 @@ const createCompany = asynchandler(async (req, res) => {
     );
   }
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
     const newCompany = await Company.create({
       gst,
       phoneNumber,
@@ -43,6 +42,14 @@ const createCompany = asynchandler(async (req, res) => {
       proprieter,
       companyName,
     });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    let dataForSave = {
+      name: "Admin",
+      email: username,
+      company: newCompany._id,
+      password: hashedPassword,
+    };
+    const newUser = await User.create(dataForSave);
     await DocumentList.create({ companyId: newCompany._id, type: "purchase" });
     await DocumentList.create({ companyId: newCompany._id, type: "sales" });
     response.successResponse(res, newCompany, "Company created successfully");
@@ -55,23 +62,22 @@ const createCompany = asynchandler(async (req, res) => {
 const login = asynchandler(async (req, res) => {
   const { email, password } = req.body;
   try {
-    // Check if the email belongs to a company
-    const company = await Company.findOne({ email });
-    if (company) {
-      const passwordMatch = await bcrypt.compare(password, company.password);
-      if (passwordMatch) {
-        const token = jwt.sign(
-          { companyId: company._id, userId: company._id, company: company },
-          process.env.JWTSECRET,
-          { expiresIn: "1d" }
-        );
-        return response.successResponse(
-          res,
-          { token, company: { ...company, isAdmin: true, myId: company._id } },
-          "Company login successful"
-        );
-      }
-    }
+    // const company = await Company.findOne({ email });
+    // if (company) {
+    //   const passwordMatch = await bcrypt.compare(password, company.password);
+    //   if (passwordMatch) {
+    //     const token = jwt.sign(
+    //       { companyId: company._id, userId: company._id, company: company },
+    //       process.env.JWTSECRET,
+    //       { expiresIn: "1d" }
+    //     );
+    //     return response.successResponse(
+    //       res,
+    //       { token, company: { ...company, isAdmin: true, myId: company._id } },
+    //       "Company login successful"
+    //     );
+    //   }
+    // }
 
     const user = await User.findOne({ email }).populate("company");
     if (user) {
@@ -98,8 +104,6 @@ const login = asynchandler(async (req, res) => {
         );
       }
     }
-
-    // If neither company nor user found or password didn't match, return error
     return response.errorResponse(res, "Invalid email or password");
   } catch (error) {
     console.error(error);
@@ -182,14 +186,6 @@ const createUser = asynchandler(async (req, res) => {
 
     // Attempt to find the company associated with the request user
     let company = await Company.findById(req.user.companyId);
-
-    // If company doesn't exist, create a new one
-    if (!company) {
-      company = await Company.create({
-        _id: req.user.companyId,
-        name: "Default Company Name",
-      });
-    }
 
     // Now, proceed with creating the user
     const hashedPassword = await bcrypt.hash(password, 10);
