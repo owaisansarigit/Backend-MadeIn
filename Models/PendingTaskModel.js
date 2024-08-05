@@ -15,7 +15,11 @@ const PendingTaskSchema = new mongoose.Schema({
   finalApproove: { type: Boolean, default: false },
   type: { type: String, required: true },
   endPoint: { type: String, required: true },
-  data: {},
+  data: {
+    supplier: { type: mongoose.Schema.Types.ObjectId, ref: "Customer" },
+    location: { type: mongoose.Schema.Types.ObjectId, ref: "Warehouse" },
+    itemId: { type: mongoose.Schema.Types.ObjectId, ref: "Item" },
+  },
 });
 
 const PendingTask = mongoose.model("PendingTask", PendingTaskSchema);

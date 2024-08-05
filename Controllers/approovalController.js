@@ -36,7 +36,16 @@ const getTask = asynchandler(async (req, res) => {
       $or: [{ firstApproover: userId }, { finalApproover: userId }],
     })
       .populate("firstApproover")
-      .populate("finalApproover");
+      .populate("finalApproover")
+      .populate({
+        path: "data.supplier",
+      })
+      .populate({
+        path: "data.itemId",
+      })
+      .populate({
+        path: "data.location",
+      });
     if (tasks.length > 0) {
       return response.successResponse(res, tasks, "Data fetched successfully");
     }
