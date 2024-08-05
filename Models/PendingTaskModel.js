@@ -16,9 +16,8 @@ const PendingTaskSchema = new mongoose.Schema({
   type: { type: String, required: true },
   endPoint: { type: String, required: true },
   data: {
-    supplier: { type: mongoose.Schema.Types.ObjectId, ref: "Customer" },
-    location: { type: mongoose.Schema.Types.ObjectId, ref: "Warehouse" },
-    itemId: { type: mongoose.Schema.Types.ObjectId, ref: "Item" },
+    type: mongoose.Schema.Types.Mixed,
+    default: {},
   },
 });
 

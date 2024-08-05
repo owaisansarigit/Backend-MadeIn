@@ -137,6 +137,7 @@ const addPurchase = asynchandler(async (req, res) => {
       "Purchase and transaction created successfully"
     );
   } catch (error) {
+    console.log(error)
     response.errorResponse(res, error.message);
   }
 });
